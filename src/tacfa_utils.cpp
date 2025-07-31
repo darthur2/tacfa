@@ -4,47 +4,65 @@
 // Rcpp::depends(RcppEigen)
 
 // [[Rcpp::export]]
-Eigen::MatrixXd sum_Z_cpp(const std::vector<Eigen::SparseMatrix<double>>& Z) {
+Eigen::MatrixXd sum_Z_cpp(const std::vector<Eigen::VectorXi>& Z,
+                          int K) {
   int D = Z.size();
-  int K = Z[0].cols();
   
   Eigen::MatrixXd Z_sum(D, K);
   
   for (int d = 0; d < D; ++d){
-    Eigen::SparseMatrix<double> Zd = Z[d];
-    Eigen::VectorXd Z_sum_d = Eigen::VectorXd::Zero(K);
+    Eigen::VectorXi z_d = Z[d];
     
-    for (int k = 0; k < Zd.outerSize(); ++k) {
-      for (Eigen::SparseMatrix<double>::InnerIterator it(Zd, k); it; ++it) {
-        Z_sum_d[it.col()] += it.value();
-      }
+    for (int i = 0; i < z_d.size(); ++i){
+      int k = z_d(i)-1;
+      
+      Z_sum(d,k) += 1;
     }
-    
-    Z_sum.row(d) = Z_sum_d;
   }
   
   return Z_sum;
 }
 
 // [[Rcpp::export]]
-double comp_lgamma_lk_cpp(double gamma_lk,
-                          const Eigen::MatrixXd& FF,
-                          const Eigen::MatrixXd& Gamma,
-                          const Eigen::MatrixXd& Z_sum,
-                          const Eigen::VectorXd& delta,
-                          int l,
-                          int k){
+Eigen::MatrixXd rdirichlet_cpp(int n,
+                               Eigen::VectorXd& shape){
+  int m = shape.size();
   
-
-  Eigen::MatrixXd Gamma_lk = Gamma;
-  Gamma_lk(l-1,k-1) = gamma_lk;
+  Eigen::MatrixXd draws(m, n);
   
-  Eigen::MatrixXd FF_Gamma_lk = (FF*Gamma_lk).rowwise() + delta.transpose();
-  Eigen::VectorXd FFG_log_exp_sums = FF_Gamma_lk.array().exp().rowwise().sum().log();
+  for (int i = 0; i < n; ++i){
+    Eigen::VectorXd gamma_draws_i(m);
+    
+    for (int j = 0; j < m; ++j){
+      gamma_draws_i(j) = R::rgamma(shape[j], 1.0);
+    }
+    
+    draws.col(i) = gamma_draws_i / gamma_draws_i.sum();
+  }
   
-  double lgamma_lk = (Z_sum.array()*((FF_Gamma_lk.colwise() - FFG_log_exp_sums).array())).sum() - 
-    0.5*pow(gamma_lk, 2);
-
-  return lgamma_lk;
+  return draws;
 }
 
+// [[Rcpp::export]]
+Eigen::MatrixXd comp_WZ_counts_cpp(const std::vector<Eigen::VectorXi>& W,
+                                   const std::vector<Eigen::VectorXi>& Z,
+                                   int V,
+                                   int K){
+  
+  int D = W.size();
+  Eigen::MatrixXd WZ_counts = Eigen::MatrixXd::Zero(V, K);
+  
+  for (int d = 0; d < D; ++d){
+    Eigen::VectorXi w_d = W[d];
+    Eigen::VectorXi z_d = Z[d];
+    
+    for (int i = 0; i < w_d.size(); ++i){
+      int word = w_d[i]-1;
+      int topic = z_d[i]-1;
+      
+      WZ_counts(word, topic) += 1;
+    }
+  }
+  
+  return WZ_counts;
+}

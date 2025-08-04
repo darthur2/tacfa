@@ -1,3 +1,65 @@
+sum_Z_R <- function(Z, K) {
+  D <- length(Z)
+  Z_sum <- matrix(0, nrow = D, ncol = K)
+  
+  for (d in seq_len(D)) {
+    z_d <- Z[[d]]
+    for (k in z_d) {
+      Z_sum[d,k] <- Z_sum[d,k] + 1
+    }
+  }
+  
+  Z_sum
+}
+
+rdirichlet_R <- function(n, shape){
+  m <- length(shape)
+  draws <- matrix(0, m, n)
+  
+  for (i in 1:n){
+    gamma_draws_i <- rgamma(m, shape)
+    draws[,i] <- gamma_draws_i/sum(gamma_draws_i)
+  }
+  
+  draws
+}
+
+comp_WZ_counts_R <- function(W, Z, V, K) {
+  WZ_counts <- matrix(0, nrow = V, ncol = K)
+  
+  for (d in seq_along(W)) {
+    w_d <- W[[d]]
+    z_d <- Z[[d]]
+    for (i in seq_along(w_d)) {
+      word <- w_d[i]
+      topic <- z_d[i]
+      WZ_counts[word, topic] <- WZ_counts[word, topic] + 1
+    }
+  }
+  
+  WZ_counts  
+}
+
+rmvnorm_R <- function(n, Mu, Sigma){
+  Q <- chol(Sigma)
+  L <- length(Mu)
+  
+  X <- matrix(rnorm(n*L), n, L)
+  Y <- t(t(X%*%Q) + Mu)
+  
+  Y
+}
+
+rtnorm_R <- function(n, mu, sigma, lower, upper){
+  p_lower <- pnorm(lower, mu, sigma)
+  p_upper <- pnorm(upper, mu, sigma)
+  
+  u <- runif(n, p_lower, p_upper)
+  draws <- qnorm(p_lower + u*(p_upper-p_lower))*sigma + mu
+  
+  draws
+}
+
 comp_lgamma_lk_R <- function(gamma_lk, FF, Gamma, Z_sum, delta, l, k){
   Gamma_lk <- Gamma
   Gamma_lk[l,k] <- gamma_lk
@@ -61,7 +123,7 @@ comp_lf_d_R <- function(f_d, Y_d, Z_sum_d, Phi, Gamma, R_inv, mu, sigma2, delta)
 
 sample_f_d_R <- function(f_d, Y_d, Z_sum_d, Phi, Gamma, R_inv, 
                          mu, sigma2, delta, f_Sigma){
-  f_d_star <- rbind(mvrnorm(1, f_d, f_Sigma))
+  f_d_star <- rbind(rmvnorm_R(1, f_d, f_Sigma))
   
   log_f_d <- comp_lf_d_R(f_d, Y_d, Z_sum_d, Phi, Gamma, R_inv, mu, sigma2, delta)
   log_f_d_star <- comp_lf_d_R(f_d_star, Y_d, Z_sum_d, Phi, Gamma, R_inv, mu, sigma2, delta)
@@ -76,11 +138,11 @@ sample_f_d_R <- function(f_d, Y_d, Z_sum_d, Phi, Gamma, R_inv,
   f_d
 }
 
-sample_FF <- function(FF, Y, Z_sum, Phi, Gamma, R_inv, mu, sigma2, delta, f_Sigma){
+sample_FF_R <- function(FF, Y, Z_sum, Phi, Gamma, R_inv, mu, sigma2, delta, f_Sigma){
   D <- nrow(FF)
   
   for (d in 1:D){
-    f_d <- rbind(FF[d,])
+    f_d <- FF[d,]
     FF[d,] <- sample_f_d_R(f_d, Y[d,], Z_sum[d,], Phi, Gamma, R_inv, 
                            mu, sigma2, delta, f_Sigma)
   }
@@ -100,7 +162,7 @@ comp_ldelta_k_R <- function(delta_k, FF, Gamma, Z_sum, delta, k){
   ldelta_k
 }
 
-sample_delta_k <- function(FF, Gamma, Z_sum, delta, delta_sd, k){
+sample_delta_k_R <- function(FF, Gamma, Z_sum, delta, delta_sd, k){
   delta_k <- delta[k]
   delta_k_star <- rnorm(1, delta_k, delta_sd)
   
@@ -117,11 +179,11 @@ sample_delta_k <- function(FF, Gamma, Z_sum, delta, delta_sd, k){
   delta_k
 }
 
-sample_delta <- function(FF, Gamma, Z_sum, delta, delta_sd){
+sample_delta_R <- function(FF, Gamma, Z_sum, delta, delta_sd){
   K <- length(delta)
   
   for (k in 1:(K-1)){
-    delta[k] <- sample_delta_k(FF, Gamma, Z_sum, delta, delta_sd, k)
+    delta[k] <- sample_delta_k_R(FF, Gamma, Z_sum, delta, delta_sd, k)
   }
   
   delta
@@ -151,10 +213,95 @@ sample_Z_R <- function(W, FF, Gamma, Psi, delta){
   Z_post <- comp_Z_post_R(W, FF, Gamma, Psi, delta)
 
   for (d in 1:D){
-    Z[[d]] <- apply(Z_post[[1]], 1, function(p){
+    Z[[d]] <- apply(Z_post[[d]], 1, function(p){
       sample(1:K, 1, FALSE, p)
     })
   }  
   
   Z
+}
+
+sample_phi_lj_R <- function(Y, FF, mu, sigma2, Phi, l, j){
+  FF_Phi_lj <- cbind(FF[,-l])%*%rbind(Phi[-l,j])
+  
+  phi_lj_var <- 1/(1/sigma2[j]*sum(FF[,l]^2) + 1)
+  phi_lj_mu <- 1/sigma2[j]*sum((Y[,j] - mu[j] - FF_Phi_lj)*FF[,l])
+  
+  phi_lj <- rtnorm_R(1, phi_lj_mu*phi_lj_var, sqrt(phi_lj_var), 0, Inf)
+  
+  phi_lj
+}
+
+sample_Phi_R <- function(Y, FF, mu, sigma2, Phi, Phi_indices){
+  
+  for (l in 1:L){
+    for (j in Phi_indices[[l]]){
+      Phi[l,j] <- sample_phi_lj_R(Y, FF, mu, sigma2, Phi, l, j)
+    }
+  }
+  
+  Phi
+}
+
+sample_sigma2_j_R <- function(Y, mu, FF, Phi, a_sigma2, b_sigma2, j){
+  D <- nrow(FF)
+
+  FF_Phi_j <- (FF%*%Phi)[,j]
+
+  a_sigma2_star <- D/2 + a_sigma2
+  b_sigma2_star <- 1/2*sum((Y[,j] - mu[j] - FF_Phi_j)^2) + b_sigma2
+
+  sigma2_j <- 1/rgamma(1, a_sigma2_star, b_sigma2_star)
+
+  sigma2_j
+}
+
+sample_sigma2_R <- function(Y, mu, FF, Phi, a_sigma2, b_sigma2){
+  
+  J <- ncol(Phi)
+  sigma2 <- rep(0, J)
+  
+  for (j in 1:J){
+    sigma2[j] <- sample_sigma2_j_R(Y, mu, FF, Phi, a_sigma2, b_sigma2, j)
+  }
+  
+  sigma2
+}
+
+sample_mu_j_R <- function(Y, sigma2, FF, Phi, sigma2_mu, j){
+  D <- nrow(FF)
+  FF_Phi_j <- (FF%*%Phi)[,j]
+  
+  mu_j_var <- 1/(D/sigma2[j] + 1/sigma2_mu)
+  mu_j_mu <- 1/sigma2[j]*sum(Y[,j] - FF_Phi_j)
+  
+  mu_j <- rnorm(1, mu_j_mu*mu_j_var, sqrt(mu_j_var))
+  
+  mu_j
+}
+
+sample_mu_R <- function(Y, sigma2, FF, Phi, sigma2_mu){
+  J <- ncol(Phi)
+  mu <- rep(0, J)
+    
+  for (j in 1:J){
+    mu[j] <- sample_mu_j_R(Y, sigma2, FF, Phi, sigma2_mu, j)
+  }
+  
+  mu
+}
+
+sample_Psi_R <- function(W, Z, beta){
+  V <- nrow(beta)
+  K <- ncol(beta)
+  
+  Psi <- matrix(0, V, K)
+  WZ_counts <- comp_WZ_counts_R(W, Z, V, K)
+  beta_star <- WZ_counts + beta
+  
+  for (k in 1:K){
+    Psi[,k] <- rdirichlet_R(1, beta_star[,k])
+  }
+  
+  Psi
 }

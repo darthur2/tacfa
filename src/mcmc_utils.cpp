@@ -98,7 +98,7 @@ Eigen::VectorXd rtnorm_cpp(int n,
     });
   
   Eigen::VectorXd draws = u.unaryExpr([=](double ui) {
-    return R::qnorm5(ui, mu, sigma, 1, 0);
+    return R::qnorm5(ui, 0, 1, 1, 0)*sigma + mu;
   });
   
   return draws;
@@ -179,7 +179,7 @@ Eigen::MatrixXd sample_Gamma_cpp(const Eigen::MatrixXd& FF,
   int K = Gamma.cols();
   
   for (int l = 0; l < L; ++l) {
-    for (int k = 0; k < K - 1; ++k) {  // K-1 due to constraint (e.g., identifiability)
+    for (int k = 0; k < K; ++k) {  // K-1 due to constraint (e.g., identifiability)
       Gamma(l, k) = sample_gamma_lk_cpp(FF, Gamma, Z_sum, delta, gamma_sd, l, k);
     }
   }
@@ -366,7 +366,6 @@ std::vector<Eigen::VectorXi> sample_Z_cpp(std::vector<Eigen::VectorXi>& W,
                                           const Eigen::VectorXd& delta){
   
   int D = W.size();
-  int K = Gamma.cols();
   
   std::vector<Eigen::VectorXi> Z(D);
   std::vector<Eigen::MatrixXd> Z_post = comp_Z_post_cpp(W, FF, Gamma, Psi, delta);

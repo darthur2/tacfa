@@ -55,7 +55,7 @@ rtnorm_R <- function(n, mu, sigma, lower, upper){
   p_upper <- pnorm(upper, mu, sigma)
   
   u <- runif(n, p_lower, p_upper)
-  draws <- qnorm(p_lower + u*(p_upper-p_lower))*sigma + mu
+  draws <- qnorm(u)*sigma + mu
   
   draws
 }
@@ -96,7 +96,7 @@ sample_Gamma_R <- function(FF, Gamma, Z_sum, delta, gamma_sd){
   K <- ncol(Gamma)
   
   for (l in 1:L){
-    for (k in 1:(K-1)){
+    for (k in 1:(K)){
       Gamma[l,k] <- sample_gamma_lk_R(FF, Gamma, Z_sum, delta, gamma_sd, l, k)
     }
   }
@@ -165,7 +165,7 @@ comp_ldelta_k_R <- function(delta_k, FF, Gamma, Z_sum, delta, k){
 sample_delta_k_R <- function(FF, Gamma, Z_sum, delta, delta_sd, k){
   delta_k <- delta[k]
   delta_k_star <- rnorm(1, delta_k, delta_sd)
-  
+
   log_delta_k <- comp_ldelta_k_R(delta_k, FF, Gamma, Z_sum, delta, k)
   log_delta_k_star <- comp_ldelta_k_R(delta_k_star, FF, Gamma, Z_sum, delta, k)
   
@@ -226,7 +226,7 @@ sample_phi_lj_R <- function(Y, FF, mu, sigma2, Phi, l, j){
   
   phi_lj_var <- 1/(1/sigma2[j]*sum(FF[,l]^2) + 1)
   phi_lj_mu <- 1/sigma2[j]*sum((Y[,j] - mu[j] - FF_Phi_lj)*FF[,l])
-  
+
   phi_lj <- rtnorm_R(1, phi_lj_mu*phi_lj_var, sqrt(phi_lj_var), 0, Inf)
   
   phi_lj

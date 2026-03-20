@@ -1,0 +1,430 @@
+---
+title: "tacfaSM"
+output: html_document
+---
+
+# Generative Model for $y_{ij}$
+
+$$
+\begin{align*}
+\phi_j &\sim \mathcal{N}(\mu_\phi, \sigma_\phi^2), 
+\quad j = 1, \dots, J \\
+
+\rho &\sim \text{Beta}(a_\rho, b_\rho) \\
+
+R_{ll'} &=
+\begin{cases}
+1 & \text{if } l = l' \\
+\rho & \text{if } l \neq l'
+\end{cases}
+\quad \text{for } l, l' = 1, \dots, L \\
+
+\sigma_j^2 &\sim \text{Inv-Gamma}(a_{\sigma^2}, b_{\sigma^2}), 
+\quad j = 1, \dots, J \\
+
+\mu_j &\sim \mathcal{N}(\mu_0, \sigma_\mu^2), 
+\quad j = 1, \dots, J \\
+
+f_i \mid R &\sim \mathcal{N}(0, R), 
+\quad i = 1, \dots, N, \quad f_i \in \mathbb{R}^L \\
+
+y_{ij} \mid \mu_j, f_i, \phi_j, \sigma_j^2 
+&\sim \mathcal{N}\bigl(\mu_j + \phi_j\, f_{i,\lambda(j)}, \sigma_j^2\bigr), \\
+&\quad i = 1, \dots, N,\; j = 1, \dots, J, \quad \lambda(j) \in \{1, \dots, L\}
+\end{align*}
+$$
+
+# Generative Model for $w_{im}$
+
+$$
+\begin{align*}
+\gamma_{lk} &\sim \mathcal{N}(\mu_\gamma, \sigma_\gamma^2), 
+\quad l = 1, \dots, L,\; k = 1, \dots, K-1 \\
+
+\gamma_k &\in \mathbb{R}^L, \quad \delta_K = 0,\; \gamma_K = 0 \\
+
+\theta_{ik} &= \frac{\exp\bigl(\delta_k + f_i^\top \gamma_k\bigr)}
+{\sum_{k'=1}^K \exp\bigl(\delta_{k'} + f_i^\top \gamma_{k'}\bigr)}, 
+\quad i = 1, \dots, N,\; k = 1, \dots, K \\
+
+z_{im} \mid \theta_i &\sim \text{Multinomial}(1, \theta_i), 
+\quad m = 1, \dots, M_i,\; i = 1, \dots, N \\
+
+\psi_{\mathcal{V}',k} &\text{ is fixed}, \quad 
+c_k = \sum_{v \in \mathcal{V}'} \psi_{vk} \\
+
+\tilde{\psi}_{\mathcal{V},k} 
+&\sim \text{Dirichlet}(\beta_{\mathcal{V}}), 
+\quad k = 1, \dots, K \\
+
+\psi_{vk} 
+&= (1 - c_k)\, \tilde{\psi}_{vk}, 
+\quad v \in \mathcal{V} \\
+
+\psi_k 
+&= (\psi_{\mathcal{V},k}, \psi_{\mathcal{V}',k}) \\
+
+w_{im} \mid z_{imk} = 1 
+&\sim \text{Multinomial}(1, \psi_k), 
+\quad m = 1, \dots, M_i,\; i = 1, \dots, N
+\end{align*}
+$$
+
+# CFA Log-Likelihood
+
+$$
+\begin{align*}
+f(Y \mid F, \boldsymbol{\phi}, \boldsymbol{\mu}, \boldsymbol{\sigma^2})
+&= \prod_{i=1}^N \prod_{j=1}^J 
+\frac{1}{\sqrt{2\pi \sigma_j^2}} 
+\exp\left\{ -\frac{1}{2\sigma_j^2} 
+\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \right\} \\[8pt]
+
+&= \left[ \prod_{j=1}^J \left( \frac{1}{\sqrt{2\pi \sigma_j^2}} \right)^N \right]
+\exp\left\{ 
+- \sum_{j=1}^J \frac{1}{2\sigma_j^2} 
+\sum_{i=1}^N \left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 
+\right\}
+\end{align*}
+$$
+
+# LDA Log-Likelihood
+
+$$
+\begin{align*}
+f(W \mid F, \Gamma, Z, \Psi)
+&= \left[
+\prod_{i=1}^N \prod_{m=1}^{M_i} \prod_{k=1}^K \prod_{v=1}^V 
+\psi_{vk}^{\,w_{imv} z_{imk}}
+\right]
+\left[
+\prod_{i=1}^N \prod_{m=1}^{M_i} \prod_{k=1}^K 
+\left(
+\frac{\exp(\delta_k + f_i^\top \gamma_k)}
+{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
+\right)^{z_{imk}}
+\right] \\[10pt]
+
+&= \left[
+\prod_{v=1}^V \prod_{k=1}^K 
+\psi_{vk}^{\sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk}}
+\right]
+\left[
+\prod_{i=1}^N \prod_{k=1}^K 
+\left(
+\frac{\exp(\delta_k + f_i^\top \gamma_k)}
+{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
+\right)^{\sum_{m=1}^{M_i} z_{imk}}
+\right]
+\end{align*}
+$$
+
+# Full Log-Likelihood
+
+$$
+\begin{align*}
+&f(Y, W \mid F, \boldsymbol{\phi}, \boldsymbol{\mu}, \boldsymbol{\sigma^2}, \Gamma, Z, \Psi) = \\[10pt]
+&\quad \left[
+\prod_{j=1}^J \left( \frac{1}{\sqrt{2\pi \sigma_j^2}} \right)^N
+\right]
+\exp\left\{
+- \sum_{j=1}^J \frac{1}{2\sigma_j^2}
+\sum_{i=1}^N \left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2
+\right\} \\[10pt]
+
+&\quad \times
+\left[
+\prod_{v=1}^V \prod_{k=1}^K
+\psi_{vk}^{\sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk}}
+\right] \\[10pt]
+
+&\quad \times
+\left[
+\prod_{i=1}^N \prod_{k=1}^K
+\left(
+\frac{\exp(\delta_k + f_i^\top \gamma_k)}
+{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
+\right)^{\sum_{m=1}^{M_i} z_{imk}}
+\right]
+\end{align*}
+$$
+# Full Log-Likelihood
+
+$$
+\begin{align*}
+\log f(Y, W \mid F, \boldsymbol{\phi}, \boldsymbol{\mu}, \boldsymbol{\sigma^2}, \Gamma, Z, \Psi)
+&= -\frac{N}{2} \sum_{j=1}^J \log(2\pi \sigma_j^2) \\[8pt]
+&\quad - \sum_{j=1}^J \frac{1}{2\sigma_j^2}
+\sum_{i=1}^N \left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \\[8pt]
+
+&\quad + \sum_{v=1}^V \sum_{k=1}^K
+\left( \sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk} \right)
+\log \psi_{vk} \\[8pt]
+
+&\quad + \sum_{i=1}^N \sum_{k=1}^K
+\left( \sum_{m=1}^{M_i} z_{imk} \right)
+\left[
+\delta_k + f_i^\top \gamma_k
+- \log \left( \sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right)
+\right] \\[8pt]
+&= -\frac{N}{2} \sum_{j=1}^J \log(\sigma_j^2)
+- \sum_{i=1}^N \Bigg[
+\sum_{j=1}^J \frac{1}{2\sigma_j^2}
+\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \\
+&\hspace{4.5cm}
+- \sum_{m=1}^{M_i} \log\!\left( \psi_{w_{im}}^\top \theta_i \right)
+\Bigg]
+\end{align*}
+$$
+
+where
+
+$$
+\theta_{ik}
+= \frac{\exp(\delta_k + f_i^\top \gamma_k)}
+{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
+$$
+
+# Priors
+
+## Prior for $\mu_j$
+
+$$
+\pi(\mu_j)
+\propto \exp\left\{
+-\frac{1}{2\sigma_\mu^2} (\mu_j - \mu_0)^2
+\right\}
+\quad \text{(Normal; conjugate)}
+$$
+
+## Prior for $\sigma_j^2$
+
+$$
+\pi(\sigma_j^2)
+\propto (\sigma_j^2)^{-(a_{\sigma^2} + 1)}
+\exp\left\{
+-\frac{b_{\sigma^2}}{\sigma_j^2}
+\right\}
+\quad \text{(Inverse-Gamma; conjugate)}
+$$
+
+## Prior for $\phi_j$
+
+$$
+\pi(\phi_j)
+\propto \exp\left\{
+-\frac{1}{2\sigma_\phi^2} (\phi_j - \mu_\phi)^2
+\right\} \, \mathbf{1}[\phi_j > 0]
+\quad \text{(Normal, truncated; conjugate)}
+$$
+
+## Prior for $\rho$
+
+$$
+\pi(\rho)
+\propto \rho^{a_\rho - 1} (1 - \rho)^{b_\rho - 1}
+\quad \text{(Beta; requires MH)}
+$$
+
+## Prior for $\boldsymbol{f}_i$
+
+$$
+\pi(f_i)
+\propto \exp\left\{
+-\frac{1}{2} f_i^\top R^{-1} f_i
+\right\}
+\quad \text{(Multivariate normal; requires MH)}
+$$
+
+## Prior for $\delta_k$
+
+$$
+\pi(\delta_k)
+\propto \exp\left\{
+-\frac{1}{2\sigma_\delta^2} (\delta_k - \mu_\delta)^2
+\right\}
+\quad \text{(Normal; requires MH)}
+$$
+
+## Prior for $\gamma_{lk}$
+
+$$
+\pi(\gamma_{lk})
+\propto \exp\left\{
+-\frac{1}{2\sigma_\gamma^2} (\gamma_{lk} - \mu_\gamma)^2
+\right\}
+\quad \text{(Normal; requires MH)}
+$$
+
+## Prior for $\boldsymbol{\beta}_{\mathcal{V},k}$
+
+$$
+\begin{align*}
+\pi(\tilde{\psi}_{\mathcal{V},k} \mid \beta_{\mathcal{V}})
+&\propto \prod_{v \in \mathcal{V}} \tilde{\psi}_{vk}^{\,\beta_{vk} - 1}
+\quad \text{(Dirichlet; conjugate)} \\[6pt]
+
+\psi_{vk} 
+&= (1 - c_k)\, \tilde{\psi}_{vk}, 
+\quad c_k = \sum_{v \in \mathcal{V}'} \psi_{vk}
+\end{align*}
+$$
+
+# Full Conditionals
+
+## Full Conditional for $\mu_j$
+
+$$
+\begin{align*}
+\mu_j \mid \cdot 
+&\sim \mathcal{N}(m_j, V_j)
+\end{align*}
+$$
+
+$$
+\begin{align*}
+V_j 
+&= \left( \frac{N}{\sigma_j^2} + \frac{1}{\sigma_\mu^2} \right)^{-1} \\[6pt]
+
+m_j 
+&= V_j \left[
+\frac{1}{\sigma_j^2} \sum_{i=1}^N \left(y_{ij} - \phi_j f_{i,\lambda(j)}\right)
++ \frac{\mu_0}{\sigma_\mu^2}
+\right]
+\end{align*}
+$$
+
+## Full Conditional for $\sigma_j^2$
+
+$$
+\begin{align*}
+\sigma_j^2 \mid \cdot 
+&\sim \text{Inv-Gamma}\left(a_{\sigma^2} + \frac{N}{2},\;
+b_{\sigma^2} + \frac{1}{2} \sum_{i=1}^N 
+\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2
+\right)
+\end{align*}
+$$
+
+## Full Conditional for $\phi_j$
+
+$$
+\begin{align*}
+\phi_j \mid \cdot 
+&\sim \mathcal{N}(m_j, V_j)\, \mathbf{1}[\phi_j > 0]
+\end{align*}
+$$
+
+$$
+\begin{align*}
+V_j 
+&= \left(
+\frac{1}{\sigma_j^2} \sum_{i=1}^N f_{i,\lambda(j)}^2
++ \frac{1}{\sigma_\phi^2}
+\right)^{-1} \\[6pt]
+
+m_j 
+&= V_j \left[
+\frac{1}{\sigma_j^2} \sum_{i=1}^N f_{i,\lambda(j)} (y_{ij} - \mu_j)
++ \frac{\mu_\phi}{\sigma_\phi^2}
+\right]
+\end{align*}
+$$
+
+## Full Conditional for $\rho$
+
+$$
+\begin{align*}
+\log \pi(\rho \mid \cdot)
+&\propto (a_\rho - 1)\log \rho + (b_\rho - 1)\log(1 - \rho) \\
+&\quad - \frac{N}{2} \left[
+(L-1)\log(1 - \rho) + \log\big(1 + (L-1)\rho\big)
+\right] \\
+&\quad - \frac{1}{2} \sum_{i=1}^N \left[
+\frac{1}{1 - \rho} \|f_i\|^2
+- \frac{\rho}{(1 - \rho)(1 + (L-1)\rho)} (\mathbf{1}^\top f_i)^2
+\right]
+\end{align*}
+$$
+
+## Full Conditional for $\boldsymbol{f}_i$
+
+$$
+\begin{align*}
+\log \pi(f_i \mid \cdot)
+&\propto -\frac{1}{2} f_i^\top R^{-1} f_i \\[6pt]
+
+&\quad - \sum_{j=1}^J \frac{1}{2\sigma_j^2}
+\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \\[6pt]
+
+&\quad + \sum_{k=1}^K n_{ik}
+\left[
+f_i^\top \gamma_k + \delta_k
+- \log \left( \sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right)
+\right]
+\end{align*}
+$$
+
+where
+
+$$
+n_{ik} = \sum_{m=1}^{M_i} z_{imk}
+$$
+
+## Full Conditional for $\delta_k$
+
+$$
+\begin{align*}
+\log \pi(\boldsymbol{\delta} \mid \cdot)
+&\propto 
+\sum_{i=1}^N \sum_{k=1}^K n_{ik} (\delta_k + f_i^\top \gamma_k) \\[6pt]
+
+&\quad - \sum_{i=1}^N M_i 
+\log \left( \sum_{k'=1}^K 
+\exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right) \\[6pt]
+
+&\quad - \frac{1}{2\sigma_\delta^2} 
+\sum_{k=1}^K (\delta_k - \mu_\delta)^2
+\end{align*}
+$$
+
+where
+
+$$
+n_{ik} = \sum_{m=1}^{M_i} z_{imk}
+$$
+
+## Full Conditional for $\gamma_{lk}$
+
+$$
+\begin{align*}
+\log \pi(\Gamma \mid \cdot)
+&\propto 
+\sum_{i=1}^N \sum_{k=1}^K n_{ik} \, f_i^\top \gamma_k \\[6pt]
+
+&\quad - \sum_{i=1}^N M_i 
+\log \left( \sum_{k'=1}^K 
+\exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right) \\[6pt]
+
+&\quad - \frac{1}{2\sigma_\gamma^2}
+\sum_{k=1}^K \sum_{l=1}^L (\gamma_{lk} - \mu_\gamma)^2
+\end{align*}
+$$
+
+## Full Conditional for $\boldsymbol{\psi}_{\mathcal{V},k}$
+
+$$
+\begin{align*}
+n_{vk} 
+&= \sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk} \\[6pt]
+
+\tilde{\psi}_{\mathcal{V},k} \mid \cdot
+&\sim \text{Dirichlet}\bigl(\beta_{\mathcal{V}} + n_{vk}\bigr) \\[6pt]
+
+\psi_{vk}
+&= (1 - c_k)\, \tilde{\psi}_{vk}, 
+\quad v \in \mathcal{V}, \quad
+c_k = \sum_{v \in \mathcal{V}'} \psi_{vk}
+\end{align*}
+$$
+

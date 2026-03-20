@@ -1,0 +1,3 @@
+useDynLib(tacfa)
+importFrom(Rcpp, evalCpp)
+export("Rcpp.fake.fun")

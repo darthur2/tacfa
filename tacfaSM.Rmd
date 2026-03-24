@@ -3,428 +3,1044 @@ title: "tacfaSM"
 output: html_document
 ---
 
-# Generative Model for $y_{ij}$
+# Data Model
 
 $$
-\begin{align*}
-\phi_j &\sim \mathcal{N}(\mu_\phi, \sigma_\phi^2), 
-\quad j = 1, \dots, J \\
+\begin{align}
+y_{ij} \mid \mu_j, \phi_j, \boldsymbol{f}_i, \sigma_j^2 &\sim \mathcal{N}\left(\mu_j + \phi_j^* f_{i,\lambda_S(j)}, \sigma_j^2 \right) \\
+w_{im} \mid z_{im} &\sim \mathcal{Cat}\left(\boldsymbol{\psi}_{z_{im}}^*\right) \\
+z_{im} &\sim \mathcal{Cat}\left(\boldsymbol{\theta}_i\right) \\
+\boldsymbol{\theta}_i &= \frac{\exp\left\{\tau_k^* + \gamma_k^* f_{i,\lambda_T(k)} \right\}}{\sum_{k'=1}^K \exp\left\{\tau_{k'}^* + \gamma_{k'}^* f_{i,\lambda_T(k')} \right\}}
+\end{align}
+$$
 
-\rho &\sim \text{Beta}(a_\rho, b_\rho) \\
+# Priors
 
-R_{ll'} &=
+$$
+\begin{align}
+\mu_j &\sim \mathcal{N}\left(\mu_0, \sigma_\mu^2\right) \\
+
+\phi_j &\sim \mathcal{N}^+\left(\mu_\phi, \sigma_\phi^2\right) \\
+
+\boldsymbol{f}_i \mid \rho &\overset{iid}{\sim} \mathcal{N}\left(\boldsymbol{0}, R\left(\rho\right)\right); \quad \boldsymbol{f}_i \in \mathbb{R}^L \\
+
+\rho &\sim \text{Beta}\left(a_\rho, b_\rho\right) \\
+
+\sigma_j^2 &\sim \text{InvGamma}\left(a_{\sigma^2}, b_{\sigma^2}\right) \\
+
+\tilde{\boldsymbol{\psi}}_k &\sim \text{Dirichlet}(\boldsymbol{\beta}) \\
+
+\tau_k &\sim \mathcal{N}(\mu_\tau, \sigma_\tau^2) \\
+
+\gamma_k &\sim \mathcal{N}(\mu_\gamma, \sigma_\gamma^2)
+\end{align}
+$$
+
+# Indices
+
+$$
+\begin{align}
+i &\in \left\{1, 2, \dots, N\right\} \\
+
+j &\in \left\{1, 2, \dots, J\right\} \\
+
+l &\in \left\{1, 2, \dots, L\right\} \\
+
+k &\in \left\{1, 2, \dots, K\right\} \\
+
+m &\in \left\{1, 2, \dots, M_i\right\} \\
+
+v &\in \left\{1, 2, \dots, V\right\} \\
+
+\end{align}
+$$
+
+# Functions
+
+$$
+\begin{align}
+\phi_j^* &=
 \begin{cases}
-1 & \text{if } l = l' \\
-\rho & \text{if } l \neq l'
-\end{cases}
-\quad \text{for } l, l' = 1, \dots, L \\
+1 & \quad \text{if} \quad j \in \mathcal{A} \\
+\phi_j & \quad \text{if} \quad j \notin \mathcal{A}
+\end{cases} \\
 
-\sigma_j^2 &\sim \text{Inv-Gamma}(a_{\sigma^2}, b_{\sigma^2}), 
-\quad j = 1, \dots, J \\
+\lambda_S(j) &= l \quad \text{if} \quad j \in \mathcal{S}_l \\
 
-\mu_j &\sim \mathcal{N}(\mu_0, \sigma_\mu^2), 
-\quad j = 1, \dots, J \\
+\psi_{vk}^* &=
+\begin{cases}
+\eta & \text{if } v = v_k \\
+\epsilon & \text{if } v \in \mathcal{V},\; v \neq v_k \\
+(1-\eta-(K-1)\epsilon)\,\tilde{\psi}_{vk} & \text{if } v \notin \mathcal{V}
+\end{cases} \\
 
-f_i \mid R &\sim \mathcal{N}(0, R), 
-\quad i = 1, \dots, N, \quad f_i \in \mathbb{R}^L \\
+\epsilon &> 0; \eta \gg \epsilon \\
 
-y_{ij} \mid \mu_j, f_i, \phi_j, \sigma_j^2 
-&\sim \mathcal{N}\bigl(\mu_j + \phi_j\, f_{i,\lambda(j)}, \sigma_j^2\bigr), \\
-&\quad i = 1, \dots, N,\; j = 1, \dots, J, \quad \lambda(j) \in \{1, \dots, L\}
-\end{align*}
+\tau_k^* &=
+\begin{cases}
+\tau_k & \quad \text{if} \quad k \neq K \\
+
+0 & \quad \text{if} \quad k = K
+\end{cases} \\
+
+\gamma_k^* &=
+\begin{cases}
+c & \quad \text{if} \quad k \in \mathcal{B} \\
+\gamma_k & \quad \text{if} \quad k \notin \mathcal{B} \ \wedge \ k \neq K \\
+0 & \quad \text{if} \quad k = K
+\end{cases} \\
+
+\lambda_T(k) &= l \quad \text{if} \quad k \in \mathcal{T}_l \\
+
+R_{l,l'} &=
+\begin{cases}
+1 & \quad \text{if} \quad l=l' \\
+\rho & \quad \text{if} \quad l \neq l'
+\end{cases} \\
+\end{align}
 $$
 
-# Generative Model for $w_{im}$
+# Sets
 
 $$
-\begin{align*}
-\gamma_{lk} &\sim \mathcal{N}(\mu_\gamma, \sigma_\gamma^2), 
-\quad l = 1, \dots, L,\; k = 1, \dots, K-1 \\
+\begin{align}
+\mathcal{A} &\subseteq \left\{1, 2, \dots, J\right\} \\
 
-\gamma_k &\in \mathbb{R}^L, \quad \delta_K = 0,\; \gamma_K = 0 \\
+\bigcup_{l=1}^L \mathcal{S}_l &= \{1,\dots,J\}, 
+\quad
+\mathcal{S}_l \cap \mathcal{S}_{l'} = \varnothing \ \text{for } l \neq l' \\
 
-\theta_{ik} &= \frac{\exp\bigl(\delta_k + f_i^\top \gamma_k\bigr)}
-{\sum_{k'=1}^K \exp\bigl(\delta_{k'} + f_i^\top \gamma_{k'}\bigr)}, 
-\quad i = 1, \dots, N,\; k = 1, \dots, K \\
+\vert \mathcal{S}_l \vert &\geq 3 \ \forall \ l \\
 
-z_{im} \mid \theta_i &\sim \text{Multinomial}(1, \theta_i), 
-\quad m = 1, \dots, M_i,\; i = 1, \dots, N \\
+\mathcal{V} &\subset \left\{1, 2, \dots, V\right\} = \left\{v_1, v_2, \dots, v_K\right\} \\
 
-\psi_{\mathcal{V}',k} &\text{ is fixed}, \quad 
-c_k = \sum_{v \in \mathcal{V}'} \psi_{vk} \\
+\vert \mathcal{V} \vert &= K; v_k \neq v_{k'} \ \text{for} \ k \neq k' \\
 
-\tilde{\psi}_{\mathcal{V},k} 
-&\sim \text{Dirichlet}(\beta_{\mathcal{V}}), 
-\quad k = 1, \dots, K \\
+\mathcal{B} &\subseteq \left\{1, 2, \dots, K\right\} \\
 
-\psi_{vk} 
-&= (1 - c_k)\, \tilde{\psi}_{vk}, 
-\quad v \in \mathcal{V} \\
-
-\psi_k 
-&= (\psi_{\mathcal{V},k}, \psi_{\mathcal{V}',k}) \\
-
-w_{im} \mid z_{imk} = 1 
-&\sim \text{Multinomial}(1, \psi_k), 
-\quad m = 1, \dots, M_i,\; i = 1, \dots, N
-\end{align*}
+\bigcup_{l=1}^L \mathcal{T}_l &= \{1,\dots,K\}, 
+\quad
+\mathcal{T}_l \cap \mathcal{T}_{l'} = \varnothing \ \text{for } l \neq l' \\
+\end{align}
 $$
 
 # CFA Log-Likelihood
 
 $$
-\begin{align*}
-f(Y \mid F, \boldsymbol{\phi}, \boldsymbol{\mu}, \boldsymbol{\sigma^2})
-&= \prod_{i=1}^N \prod_{j=1}^J 
-\frac{1}{\sqrt{2\pi \sigma_j^2}} 
-\exp\left\{ -\frac{1}{2\sigma_j^2} 
-\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \right\} \\[8pt]
-
-&= \left[ \prod_{j=1}^J \left( \frac{1}{\sqrt{2\pi \sigma_j^2}} \right)^N \right]
-\exp\left\{ 
-- \sum_{j=1}^J \frac{1}{2\sigma_j^2} 
-\sum_{i=1}^N \left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 
-\right\}
-\end{align*}
+\begin{align}
+\ell(\{y_{ij}\}) 
+&= \sum_{i=1}^N \sum_{j=1}^J 
+\left[
+-\frac{1}{2}\log(2\pi \sigma_j^2)
+-\frac{1}{2\sigma_j^2}
+\big(y_{ij} - \mu_j - \phi_j^* f_{i,\lambda_S(j)}\big)^2
+\right] \\
+\\
+&=
+-\frac{NJ}{2}\log(2\pi)
+-\frac{N}{2} \sum_{j=1}^J \log \sigma_j^2
+-\frac{1}{2} \sum_{i=1}^N \sum_{j=1}^J 
+\frac{\big(y_{ij} - \mu_j - \phi_j^* f_{i,\lambda_S(j)}\big)^2}{\sigma_j^2}
+\end{align}
 $$
 
 # LDA Log-Likelihood
 
 $$
-\begin{align*}
-f(W \mid F, \Gamma, Z, \Psi)
-&= \left[
-\prod_{i=1}^N \prod_{m=1}^{M_i} \prod_{k=1}^K \prod_{v=1}^V 
-\psi_{vk}^{\,w_{imv} z_{imk}}
-\right]
+\begin{align}
+\ell(\{w_{im}, z_{im}\})
+&=
+\sum_{i=1}^N \sum_{m=1}^{M_i}
 \left[
-\prod_{i=1}^N \prod_{m=1}^{M_i} \prod_{k=1}^K 
-\left(
-\frac{\exp(\delta_k + f_i^\top \gamma_k)}
-{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
-\right)^{z_{imk}}
-\right] \\[10pt]
-
-&= \left[
-\prod_{v=1}^V \prod_{k=1}^K 
-\psi_{vk}^{\sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk}}
-\right]
+\log \theta_{i, z_{im}} + \log \psi^*_{w_{im}, z_{im}}
+\right] \\
+\\
+&=
+\sum_{i=1}^N \sum_{m=1}^{M_i}
 \left[
-\prod_{i=1}^N \prod_{k=1}^K 
-\left(
-\frac{\exp(\delta_k + f_i^\top \gamma_k)}
-{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
-\right)^{\sum_{m=1}^{M_i} z_{imk}}
+\tau^*_{z_{im}} + \gamma^*_{z_{im}} f_{i,\lambda_T(z_{im})}
+- \log \left( \sum_{k=1}^K \exp\{\tau_k^* + \gamma_k^* f_{i,\lambda_T(k)}\} \right)
++ \log \psi^*_{w_{im}, z_{im}}
 \right]
-\end{align*}
-$$
-
-# Full Log-Likelihood
-
-$$
-\begin{align*}
-&f(Y, W \mid F, \boldsymbol{\phi}, \boldsymbol{\mu}, \boldsymbol{\sigma^2}, \Gamma, Z, \Psi) = \\[10pt]
-&\quad \left[
-\prod_{j=1}^J \left( \frac{1}{\sqrt{2\pi \sigma_j^2}} \right)^N
-\right]
-\exp\left\{
-- \sum_{j=1}^J \frac{1}{2\sigma_j^2}
-\sum_{i=1}^N \left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2
-\right\} \\[10pt]
-
-&\quad \times
-\left[
-\prod_{v=1}^V \prod_{k=1}^K
-\psi_{vk}^{\sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk}}
-\right] \\[10pt]
-
-&\quad \times
-\left[
-\prod_{i=1}^N \prod_{k=1}^K
-\left(
-\frac{\exp(\delta_k + f_i^\top \gamma_k)}
-{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
-\right)^{\sum_{m=1}^{M_i} z_{imk}}
-\right]
-\end{align*}
-$$
-# Full Log-Likelihood
-
-$$
-\begin{align*}
-\log f(Y, W \mid F, \boldsymbol{\phi}, \boldsymbol{\mu}, \boldsymbol{\sigma^2}, \Gamma, Z, \Psi)
-&= -\frac{N}{2} \sum_{j=1}^J \log(2\pi \sigma_j^2) \\[8pt]
-&\quad - \sum_{j=1}^J \frac{1}{2\sigma_j^2}
-\sum_{i=1}^N \left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \\[8pt]
-
-&\quad + \sum_{v=1}^V \sum_{k=1}^K
-\left( \sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk} \right)
-\log \psi_{vk} \\[8pt]
-
-&\quad + \sum_{i=1}^N \sum_{k=1}^K
-\left( \sum_{m=1}^{M_i} z_{imk} \right)
-\left[
-\delta_k + f_i^\top \gamma_k
-- \log \left( \sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right)
-\right] \\[8pt]
-&= -\frac{N}{2} \sum_{j=1}^J \log(\sigma_j^2)
-- \sum_{i=1}^N \Bigg[
-\sum_{j=1}^J \frac{1}{2\sigma_j^2}
-\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \\
-&\hspace{4.5cm}
-- \sum_{m=1}^{M_i} \log\!\left( \psi_{w_{im}}^\top \theta_i \right)
-\Bigg]
-\end{align*}
-$$
-
-where
-
-$$
-\theta_{ik}
-= \frac{\exp(\delta_k + f_i^\top \gamma_k)}
-{\sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'})}
+\end{align}
 $$
 
 # Priors
 
-## Prior for $\mu_j$
+## Log-Prior for $\mu_j$
 
 $$
-\pi(\mu_j)
-\propto \exp\left\{
--\frac{1}{2\sigma_\mu^2} (\mu_j - \mu_0)^2
-\right\}
-\quad \text{(Normal; conjugate)}
+\begin{align}
+\log p(\mu_j)
+\propto
+-\frac{1}{2\sigma_\mu^2}(\mu_j - \mu_0)^2
+\end{align}
 $$
 
-## Prior for $\sigma_j^2$
+## Log-Prior for $\phi_j$
 
 $$
-\pi(\sigma_j^2)
-\propto (\sigma_j^2)^{-(a_{\sigma^2} + 1)}
-\exp\left\{
--\frac{b_{\sigma^2}}{\sigma_j^2}
-\right\}
-\quad \text{(Inverse-Gamma; conjugate)}
+\begin{align}
+\log p(\phi_j)
+\propto
+-\frac{1}{2\sigma_\phi^2}(\phi_j - \mu_\phi)^2,
+\quad \phi_j > 0
+\end{align}
 $$
 
-## Prior for $\phi_j$
+## Log-Prior for $\boldsymbol{f}_i$
 
 $$
-\pi(\phi_j)
-\propto \exp\left\{
--\frac{1}{2\sigma_\phi^2} (\phi_j - \mu_\phi)^2
-\right\} \, \mathbf{1}[\phi_j > 0]
-\quad \text{(Normal, truncated; conjugate)}
+\begin{align}
+\log p(\boldsymbol{f}_i \mid \rho)
+&\propto
+-\frac{1}{2}\log |R(\rho)|
+-\frac{1}{2} \boldsymbol{f}_i^\top R(\rho)^{-1} \boldsymbol{f}_i
+\end{align}
 $$
 
-## Prior for $\rho$
+## Log-Prior for $\sigma_j^2$
 
 $$
-\pi(\rho)
-\propto \rho^{a_\rho - 1} (1 - \rho)^{b_\rho - 1}
-\quad \text{(Beta; requires MH)}
+\begin{align}
+\log p(\sigma_j^2)
+\propto
+-(a_{\sigma^2}+1)\log \sigma_j^2
+- \frac{b_{\sigma^2}}{\sigma_j^2}
+\end{align}
 $$
 
-## Prior for $\boldsymbol{f}_i$
+## Log-Prior for $\boldsymbol{\tau}$
 
 $$
-\pi(f_i)
-\propto \exp\left\{
--\frac{1}{2} f_i^\top R^{-1} f_i
-\right\}
-\quad \text{(Multivariate normal; requires MH)}
+\begin{align}
+\log p(\boldsymbol{\tau})
+\propto
+-\frac{1}{2\sigma_\tau^2}
+\sum_{k=1}^{K-1} (\tau_k - \mu_\tau)^2
+\end{align}
 $$
 
-## Prior for $\delta_k$
+## Log-Prior for $\boldsymbol{\gamma}$
 
 $$
-\pi(\delta_k)
-\propto \exp\left\{
--\frac{1}{2\sigma_\delta^2} (\delta_k - \mu_\delta)^2
-\right\}
-\quad \text{(Normal; requires MH)}
+\begin{align}
+\log p(\boldsymbol{\gamma})
+\propto
+-\frac{1}{2\sigma_\gamma^2}
+\sum_{k \notin \mathcal{B},\,k \neq K}
+(\gamma_k - \mu_\gamma)^2
+\end{align}
 $$
 
-## Prior for $\gamma_{lk}$
+## Log-Prior for $\rho$
 
 $$
-\pi(\gamma_{lk})
-\propto \exp\left\{
--\frac{1}{2\sigma_\gamma^2} (\gamma_{lk} - \mu_\gamma)^2
-\right\}
-\quad \text{(Normal; requires MH)}
+\begin{align}
+\log p(\rho)
+\propto
+(a_\rho - 1)\log \rho
++ (b_\rho - 1)\log (1 - \rho)
+\end{align}
 $$
 
-## Prior for $\boldsymbol{\beta}_{\mathcal{V},k}$
+## Log-Prior for $\boldsymbol{\psi}_k$
 
 $$
-\begin{align*}
-\pi(\tilde{\psi}_{\mathcal{V},k} \mid \beta_{\mathcal{V}})
-&\propto \prod_{v \in \mathcal{V}} \tilde{\psi}_{vk}^{\,\beta_{vk} - 1}
-\quad \text{(Dirichlet; conjugate)} \\[6pt]
-
-\psi_{vk} 
-&= (1 - c_k)\, \tilde{\psi}_{vk}, 
-\quad c_k = \sum_{v \in \mathcal{V}'} \psi_{vk}
-\end{align*}
+\begin{align}
+\log p(\tilde{\boldsymbol{\psi}}_k)
+=
+\log \Gamma\!\left(\sum_{v \notin \mathcal{V}} \beta_v\right)
+- \sum_{v \notin \mathcal{V}} \log \Gamma(\beta_v)
++ \sum_{v \notin \mathcal{V}} (\beta_v - 1)\log \tilde{\psi}_{vk}
+\end{align}
 $$
 
 # Full Conditionals
 
-## Full Conditional for $\mu_j$
+# Full Conditional for $\mu_j$
 
 $$
-\begin{align*}
-\mu_j \mid \cdot 
-&\sim \mathcal{N}(m_j, V_j)
-\end{align*}
-$$
-
-$$
-\begin{align*}
-V_j 
-&= \left( \frac{N}{\sigma_j^2} + \frac{1}{\sigma_\mu^2} \right)^{-1} \\[6pt]
-
-m_j 
-&= V_j \left[
-\frac{1}{\sigma_j^2} \sum_{i=1}^N \left(y_{ij} - \phi_j f_{i,\lambda(j)}\right)
-+ \frac{\mu_0}{\sigma_\mu^2}
-\right]
-\end{align*}
+\begin{align}
+\mu_j \mid \cdot
+&\sim \mathcal{N}\left(
+\frac{
+\frac{1}{\sigma_j^2}\sum_{i=1}^N \left(y_{ij} - \phi_j^* f_{i,\lambda_S(j)}\right)
++ \frac{1}{\sigma_\mu^2}\mu_0
+}{
+\frac{N}{\sigma_j^2} + \frac{1}{\sigma_\mu^2}
+},
+\;
+\left(\frac{N}{\sigma_j^2} + \frac{1}{\sigma_\mu^2}\right)^{-1}
+\right)
+\end{align}
 $$
 
 ## Full Conditional for $\sigma_j^2$
 
 $$
-\begin{align*}
-\sigma_j^2 \mid \cdot 
-&\sim \text{Inv-Gamma}\left(a_{\sigma^2} + \frac{N}{2},\;
-b_{\sigma^2} + \frac{1}{2} \sum_{i=1}^N 
-\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2
+\begin{align}
+\sigma_j^2 \mid \cdot
+&\sim \text{InvGamma}\left(
+a_{\sigma^2} + \frac{N}{2},
+\;
+b_{\sigma^2} + \frac{1}{2}\sum_{i=1}^N
+\big(y_{ij} - \mu_j - \phi_j^* f_{i,\lambda_S(j)}\big)^2
 \right)
-\end{align*}
+\end{align}
 $$
 
-## Full Conditional for $\phi_j$
+# Full Conditional for $\phi_j$
 
 $$
-\begin{align*}
-\phi_j \mid \cdot 
-&\sim \mathcal{N}(m_j, V_j)\, \mathbf{1}[\phi_j > 0]
-\end{align*}
-$$
-
-$$
-\begin{align*}
-V_j 
-&= \left(
-\frac{1}{\sigma_j^2} \sum_{i=1}^N f_{i,\lambda(j)}^2
+\begin{align}
+\phi_j \mid \cdot
+&\sim \mathcal{N}^+\left(
+\frac{
+\frac{1}{\sigma_j^2}\sum_{i=1}^N f_{i,\lambda_S(j)}(y_{ij} - \mu_j)
++ \frac{1}{\sigma_\phi^2}\mu_\phi
+}{
+\frac{1}{\sigma_j^2}\sum_{i=1}^N f_{i,\lambda_S(j)}^2
 + \frac{1}{\sigma_\phi^2}
-\right)^{-1} \\[6pt]
-
-m_j 
-&= V_j \left[
-\frac{1}{\sigma_j^2} \sum_{i=1}^N f_{i,\lambda(j)} (y_{ij} - \mu_j)
-+ \frac{\mu_\phi}{\sigma_\phi^2}
-\right]
-\end{align*}
+},
+\;
+\left(
+\frac{1}{\sigma_j^2}\sum_{i=1}^N f_{i,\lambda_S(j)}^2
++ \frac{1}{\sigma_\phi^2}
+\right)^{-1}
+\right)
+\end{align}
 $$
 
-## Full Conditional for $\rho$
+## Full Conditional for $\boldsymbol{\psi}_k$
 
 $$
-\begin{align*}
-\log \pi(\rho \mid \cdot)
-&\propto (a_\rho - 1)\log \rho + (b_\rho - 1)\log(1 - \rho) \\
-&\quad - \frac{N}{2} \left[
-(L-1)\log(1 - \rho) + \log\big(1 + (L-1)\rho\big)
-\right] \\
-&\quad - \frac{1}{2} \sum_{i=1}^N \left[
-\frac{1}{1 - \rho} \|f_i\|^2
-- \frac{\rho}{(1 - \rho)(1 + (L-1)\rho)} (\mathbf{1}^\top f_i)^2
-\right]
-\end{align*}
+\begin{align}
+\tilde{\boldsymbol{\psi}}_{k,-\mathcal{V}} \mid \cdot
+&\sim
+\text{Dirichlet}\big(
+\boldsymbol{\beta}_{-\mathcal{V}} + \boldsymbol{n}_{k,-\mathcal{V}}
+\big) \\
+n_{vk}
+&=
+\sum_{i=1}^N \sum_{m=1}^{M_i}
+\mathbb{I}(z_{im}=k,\; w_{im}=v)
+\end{align}
 $$
 
-## Full Conditional for $\boldsymbol{f}_i$
+## Log Full Conditional for $\boldsymbol{f}_i$
 
 $$
-\begin{align*}
-\log \pi(f_i \mid \cdot)
-&\propto -\frac{1}{2} f_i^\top R^{-1} f_i \\[6pt]
+\begin{align}
+\log p(\boldsymbol{f}_i \mid \cdot)
+&\propto
+-\frac{1}{2} \boldsymbol{f}_i^\top R(\rho)^{-1} \boldsymbol{f}_i \\
+&\quad
+-\frac{1}{2} \sum_{j=1}^J
+\frac{\big(y_{ij} - \mu_j - \phi_j^* f_{i,\lambda_S(j)}\big)^2}{\sigma_j^2} \\
+&\quad
++ \sum_{m=1}^{M_i}
+\gamma^*_{z_{im}} f_{i,\lambda_T(z_{im})} \\
+&\quad
+- M_i \log \left( \sum_{k=1}^K 
+\exp\{\tau_k^* + \gamma_k^* f_{i,\lambda_T(k)}\} \right)
+\end{align}
+$$
 
-&\quad - \sum_{j=1}^J \frac{1}{2\sigma_j^2}
-\left(y_{ij} - (\mu_j + \phi_j f_{i,\lambda(j)})\right)^2 \\[6pt]
+## Log Full Conditional for $\boldsymbol{\tau}$
 
-&\quad + \sum_{k=1}^K n_{ik}
-\left[
-f_i^\top \gamma_k + \delta_k
-- \log \left( \sum_{k'=1}^K \exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right)
-\right]
-\end{align*}
+$$
+\begin{align}
+\log p(\boldsymbol{\tau} \mid \cdot)
+&\propto
+\sum_{i=1}^N \sum_{m=1}^{M_i}
+\tau_{z_{im}} \, \mathbb{I}(z_{im} \neq K) \\
+&\quad
+- \sum_{i=1}^N M_i \,
+\log \left(
+\sum_{k=1}^{K-1}
+\exp\{\tau_k + \gamma_k^* f_{i,\lambda_T(k)}\}
++ \exp\{\gamma_K^* f_{i,\lambda_T(K)}\}
+\right) \\
+&\quad
+-\frac{1}{2\sigma_\tau^2}
+\sum_{k=1}^{K-1} (\tau_k - \mu_\tau)^2
+\end{align}
+$$
+
+## Log Full Conditional for $\boldsymbol{\gamma}$
+
+$$
+\begin{align}
+\log p(\boldsymbol{\gamma} \mid \cdot)
+&\propto
+\sum_{i=1}^N \sum_{m=1}^{M_i}
+\gamma_{z_{im}} f_{i,\lambda_T(z_{im})}
+\;\mathbb{I}\big(z_{im} \notin \mathcal{B},\; z_{im} \neq K\big) \\
+&\quad
+- \sum_{i=1}^N M_i \,
+\log \Bigg(
+1
++ \sum_{\substack{k=1 \\ k \notin \mathcal{B}}}^{K-1}
+\exp\{\tau_k + \gamma_k f_{i,\lambda_T(k)}\}
++ \sum_{k \in \mathcal{B}} \exp\{\tau_k + c\, f_{i,\lambda_T(k)}\}
+\Bigg) \\
+&\quad
+-\frac{1}{2\sigma_\gamma^2}
+\sum_{\substack{k=1 \\ k \notin \mathcal{B}}}^{K-1}
+(\gamma_k - \mu_\gamma)^2
+\end{align}
+$$
+
+## Log Full Conditional for $\rho$
+
+$$
+\begin{align}
+\log p(\rho \mid \cdot)
+&\propto
+-\frac{N}{2}\log |R(\rho)| \\
+&\quad
+-\frac{1}{2} \sum_{i=1}^N
+\boldsymbol{f}_i^\top R(\rho)^{-1} \boldsymbol{f}_i \\
+&\quad
++ (a_\rho - 1)\log \rho
++ (b_\rho - 1)\log(1-\rho)
+\end{align}
+$$
+
+## Full Conditional for $z_{im}$
+
+$$
+z_{im} \mid \cdot \;\sim\; \mathcal{Cat}\!\left( \boldsymbol{p}_{im} \right)
+$$
+
+$$
+p_{im,k}
+=
+\frac{
+\exp\!\left\{
+\tau_k^* + \gamma_k^* f_{i,\lambda_T(k)}
+\right\}
+\, \psi^*_{w_{im},k}
+}{
+\sum_{k'=1}^K
+\exp\!\left\{
+\tau_{k'}^* + \gamma_{k'}^* f_{i,\lambda_T(k')}
+\right\}
+\, \psi^*_{w_{im},k'}
+}
+$$
+
+# Gibbs Sampler
+
+## Step 0: Initialization
+
+### 0.1 Fixed Quantities
+
+Fix hyperparameters:
+
+$$
+\mu_0,\; \sigma_\mu^2,\;
+\mu_\phi,\; \sigma_\phi^2,\;
+a_{\sigma^2},\; b_{\sigma^2},\;
+\mu_\tau,\; \sigma_\tau^2,\;
+\mu_\gamma,\; \sigma_\gamma^2,\;
+a_\rho,\; b_\rho,\;
+\boldsymbol{\beta},\;
+\eta,\; \epsilon,\; c
+$$
+
+Fix mappings and sets:
+
+$$
+\lambda_S(j), \quad \lambda_T(k), \quad
+\mathcal{A},\; \mathcal{B},\; \mathcal{V},\;
+\{\mathcal{S}_l\}_{l=1}^L,\;
+\{\mathcal{T}_l\}_{l=1}^L
+$$
+
+---
+
+### 0.2 Initialize Parameters
+
+#### CFA parameters
+
+For $j = 1,\dots,J$:
+
+$$
+\mu_j^{(0)} \sim \mathcal{N}(\mu_0, \sigma_\mu^2)
+$$
+
+$$
+\sigma_j^{2(0)} \sim \text{InvGamma}(a_{\sigma^2}, b_{\sigma^2})
+$$
+
+$$
+\phi_j^{(0)} =
+\begin{cases}
+1 & j \in \mathcal{A} \\
+\text{draw from } \mathcal{N}^+(\mu_\phi, \sigma_\phi^2) & j \notin \mathcal{A}
+\end{cases}
+$$
+
+---
+
+#### Latent factors
+
+For $i = 1,\dots,N$:
+
+$$
+\boldsymbol{f}_i^{(0)} \sim \mathcal{N}(\boldsymbol{0}, I_L)
+$$
+
+---
+
+#### Topic parameters
+
+For $k = 1,\dots,K$:
+
+$$
+\tau_k^{(0)} =
+\begin{cases}
+\mathcal{N}(\mu_\tau, \sigma_\tau^2) & k \neq K \\
+0 & k = K
+\end{cases}
+$$
+
+$$
+\gamma_k^{(0)} =
+\begin{cases}
+c & k \in \mathcal{B} \\
+\mathcal{N}(\mu_\gamma, \sigma_\gamma^2) & k \notin \mathcal{B},\; k \neq K \\
+0 & k = K
+\end{cases}
+$$
+
+---
+
+#### Topic-word distributions
+
+For each $k = 1,\dots,K$:
+
+$$
+\tilde{\boldsymbol{\psi}}_{k,-\mathcal{V}}
+\sim
+\text{Dirichlet}(\boldsymbol{\beta}_{-\mathcal{V}})
+$$
+
+Then define the full vector:
+
+$$
+\psi^*_{vk} =
+\begin{cases}
+\eta & v = v_k \\
+\epsilon & v \in \mathcal{V},\; v \neq v_k \\
+(1-\eta-(K-1)\epsilon)\,\tilde{\psi}_{vk} & v \notin \mathcal{V}
+\end{cases}
+$$
+
+---
+
+#### Correlation parameter
+
+$$
+\rho^{(0)} \sim \text{Beta}(a_\rho, b_\rho)
+$$
+
+---
+
+### 0.3 Initialize Latent Assignments
+
+For all $i = 1,\dots,N$, $m = 1,\dots,M_i$:
+
+$$
+z_{im}^{(0)} \sim \mathcal{Cat}\left(\frac{1}{K},\dots,\frac{1}{K}\right)
+$$
+
+---
+
+### 0.4 Compute Sufficient Statistics
+
+$$
+n_{vk} = \sum_{i=1}^N \sum_{m=1}^{M_i}
+\mathbb{I}(z_{im}=k,\; w_{im}=v)
+$$
+
+$$
+n_{ik} = \sum_{m=1}^{M_i} \mathbb{I}(z_{im}=k)
+$$
+
+---
+
+### 0.5 Precompute Covariance Structure
+
+$$
+R(\rho^{(0)}), \quad R(\rho^{(0)})^{-1}, \quad \log |R(\rho^{(0)})|
+$$
+
+---
+
+### 0.6 Initialize Adaptive MH Proposals
+
+#### Latent factors $\boldsymbol{f}_i$
+
+For each $i$:
+
+$$
+\boldsymbol{f}_i' \sim \mathcal{N}\!\left(\boldsymbol{f}_i,\; \Sigma_f^{(i)}\right),
+\quad
+\Sigma_f^{(i)} = \delta_f I_L
+$$
+
+---
+
+#### Topic intercepts $\boldsymbol{\tau}$
+
+Let $\boldsymbol{\tau}_{1:K-1} \in \mathbb{R}^{K-1}$:
+
+$$
+\boldsymbol{\tau}' \sim \mathcal{N}(\boldsymbol{\tau}, \Sigma_\tau),
+\quad
+\Sigma_\tau = \delta_\tau I_{K-1}
+$$
+
+---
+
+#### Topic loadings $\boldsymbol{\gamma}$
+
+Let $\boldsymbol{\gamma}_{\{1,\dots,K-1\}\setminus \mathcal{B}} \in \mathbb{R}^{K-1-|\mathcal{B}|}$:
+
+$$
+\boldsymbol{\gamma}' \sim \mathcal{N}(\boldsymbol{\gamma}, \Sigma_\gamma),
+\quad
+\Sigma_\gamma = \delta_\gamma I
+$$
+
+---
+
+#### Correlation parameter $\rho$
+
+Work on transformed scale:
+
+$$
+\xi = \log\left(\frac{\rho}{1-\rho}\right)
+$$
+
+Proposal:
+
+$$
+\xi' \sim \mathcal{N}(\xi, \sigma_\rho^2)
+$$
+
+---
+
+### 0.7 Storage and Tuning
+
+Set:
+
+$$
+T \text{ (total iterations)}, \quad
+B \text{ (burn-in)}, \quad
+T_{\text{adapt}} \text{ (adaptation period)}
+$$
+
+Initialize storage for:
+
+$$
+\{\mu_j,\; \sigma_j^2,\; \phi_j\},\;
+\{\boldsymbol{f}_i\},\;
+\boldsymbol{\tau},\;
+\boldsymbol{\gamma},\;
+\rho
+$$
+
+---
+
+### Summary
+
+At the end of initialization, all parameters and latent variables have valid starting values, all constraints are enforced, and all Metropolis–Hastings proposal mechanisms are defined. The Markov chain is now ready to proceed to iteration $t = 1$.
+
+## Step 1: Sample Topic Assignments $z_{im}$
+
+For each $i = 1,\dots,N$ and $m = 1,\dots,M_i$:
+
+$$
+z_{im} \mid \cdot \sim \mathcal{Cat}(\boldsymbol{p}_{im})
 $$
 
 where
 
 $$
-n_{ik} = \sum_{m=1}^{M_i} z_{imk}
+p_{im,k}
+=
+\frac{
+\exp\left\{
+\tau_k^* + \gamma_k^* f_{i,\lambda_T(k)}
+\right\}
+\cdot
+\psi^*_{w_{im},k}
+}{
+\sum_{k'=1}^K
+\exp\left\{
+\tau_{k'}^* + \gamma_{k'}^* f_{i,\lambda_T(k')}
+\right\}
+\cdot
+\psi^*_{w_{im},k'}
+}
 $$
 
-## Full Conditional for $\delta_k$
+After sampling, update counts:
 
 $$
-\begin{align*}
-\log \pi(\boldsymbol{\delta} \mid \cdot)
-&\propto 
-\sum_{i=1}^N \sum_{k=1}^K n_{ik} (\delta_k + f_i^\top \gamma_k) \\[6pt]
+n_{vk}, \quad n_{ik}
+$$
 
-&\quad - \sum_{i=1}^N M_i 
-\log \left( \sum_{k'=1}^K 
-\exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right) \\[6pt]
+## Step 2: Sample Topic-Word Distributions $\boldsymbol{\psi}_k$
 
-&\quad - \frac{1}{2\sigma_\delta^2} 
-\sum_{k=1}^K (\delta_k - \mu_\delta)^2
-\end{align*}
+For each $k = 1,\dots,K$:
+
+$$
+\left(
+\frac{\psi_{vk}}{1-\eta-(K-1)\epsilon}
+\right)_{v \notin \mathcal{V}}
+\mid \cdot
+\sim
+\text{Dirichlet}(\boldsymbol{\beta}_{-\mathcal{V}} + \boldsymbol{n}_{k,-\mathcal{V}})
+$$
+
+Then construct:
+
+$$
+\psi^*_{vk} =
+\begin{cases}
+\eta & v = v_k \\
+\epsilon & v \in \mathcal{V},\; v \neq v_k \\
+\psi_{vk} & v \notin \mathcal{V}
+\end{cases}
+$$
+
+## Step 3: Sample $\mu_j$
+
+For each $j = 1,\dots,J$:
+
+$$
+\mu_j \mid \cdot
+\sim
+\mathcal{N}\left(
+\frac{
+\frac{1}{\sigma_j^2}\sum_{i=1}^N \left(y_{ij} - \phi_j^* f_{i,\lambda_S(j)}\right)
++ \frac{1}{\sigma_\mu^2}\mu_0
+}{
+\frac{N}{\sigma_j^2} + \frac{1}{\sigma_\mu^2}
+},
+\;
+\left(\frac{N}{\sigma_j^2} + \frac{1}{\sigma_\mu^2}\right)^{-1}
+\right)
+$$
+
+## Step 4: Sample $\sigma_j^2$
+
+For each $j = 1,\dots,J$:
+
+$$
+\sigma_j^2 \mid \cdot
+\sim
+\text{InvGamma}\left(
+a_{\sigma^2} + \frac{N}{2},
+\;
+b_{\sigma^2} + \frac{1}{2}\sum_{i=1}^N
+\left(y_{ij} - \mu_j - \phi_j^* f_{i,\lambda_S(j)}\right)^2
+\right)
+$$
+
+## Step 5: Sample $\phi_j$
+
+For each $j \notin \mathcal{A}$:
+
+$$
+\phi_j \mid \cdot
+\sim
+\mathcal{N}^+\left(
+\frac{
+\frac{1}{\sigma_j^2}\sum_{i=1}^N f_{i,\lambda_S(j)}(y_{ij} - \mu_j)
++ \frac{1}{\sigma_\phi^2}\mu_\phi
+}{
+\frac{1}{\sigma_j^2}\sum_{i=1}^N f_{i,\lambda_S(j)}^2
++ \frac{1}{\sigma_\phi^2}
+},
+\;
+\left(
+\frac{1}{\sigma_j^2}\sum_{i=1}^N f_{i,\lambda_S(j)}^2
++ \frac{1}{\sigma_\phi^2}
+\right)^{-1}
+\right)
+$$
+
+For $j \in \mathcal{A}$:
+$$
+\phi_j = 1
+$$
+
+## Step 6: Sample Latent Factors $\boldsymbol{f}_i$ (Adaptive MH with Robbins--Monro)
+
+For each $i = 1,\dots,N$:
+
+### Proposal
+
+$$
+\boldsymbol{f}_i' \sim \mathcal{N}\left(\boldsymbol{f}_i,\; \Sigma_f^{(i)}\right)
 $$
 
 where
 
 $$
-n_{ik} = \sum_{m=1}^{M_i} z_{imk}
+\Sigma_f^{(i)} = s_{f,i}^2 \; \widehat{\text{Cov}}(\boldsymbol{f}_i^{(1:t)}) + \epsilon I_L
 $$
 
-## Full Conditional for $\gamma_{lk}$
+---
+
+### Acceptance probability
 
 $$
-\begin{align*}
-\log \pi(\Gamma \mid \cdot)
-&\propto 
-\sum_{i=1}^N \sum_{k=1}^K n_{ik} \, f_i^\top \gamma_k \\[6pt]
-
-&\quad - \sum_{i=1}^N M_i 
-\log \left( \sum_{k'=1}^K 
-\exp(\delta_{k'} + f_i^\top \gamma_{k'}) \right) \\[6pt]
-
-&\quad - \frac{1}{2\sigma_\gamma^2}
-\sum_{k=1}^K \sum_{l=1}^L (\gamma_{lk} - \mu_\gamma)^2
-\end{align*}
+\alpha = \min\left(1,
+\exp\left(
+\log p(\boldsymbol{f}_i' \mid \cdot)
+-
+\log p(\boldsymbol{f}_i \mid \cdot)
+\right)
+\right)
 $$
 
-## Full Conditional for $\boldsymbol{\psi}_{\mathcal{V},k}$
+---
+
+### Robbins--Monro scaling update (during burn-in)
 
 $$
-\begin{align*}
-n_{vk} 
-&= \sum_{i=1}^N \sum_{m=1}^{M_i} w_{imv} z_{imk} \\[6pt]
-
-\tilde{\psi}_{\mathcal{V},k} \mid \cdot
-&\sim \text{Dirichlet}\bigl(\beta_{\mathcal{V}} + n_{vk}\bigr) \\[6pt]
-
-\psi_{vk}
-&= (1 - c_k)\, \tilde{\psi}_{vk}, 
-\quad v \in \mathcal{V}, \quad
-c_k = \sum_{v \in \mathcal{V}'} \psi_{vk}
-\end{align*}
+\log s_{f,i}^{(t+1)}
+=
+\log s_{f,i}^{(t)}
++
+\kappa_t \left(\alpha - \alpha_f^*\right)
 $$
 
+with target acceptance $\alpha_f^* \approx 0.3$.
+
+---
+
+### Covariance adaptation
+
+$$
+\widehat{\text{Cov}}(\boldsymbol{f}_i^{(1:t)})
+\leftarrow
+\text{EmpiricalCov}(\boldsymbol{f}_i^{(1:t)})
+$$
+
+## Step 7: Sample $\boldsymbol{\tau}$ (Adaptive MH with Robbins--Monro)
+
+Let $\boldsymbol{\tau}_{1:K-1} \in \mathbb{R}^{K-1}$.
+
+### Proposal
+
+$$
+\boldsymbol{\tau}' \sim \mathcal{N}(\boldsymbol{\tau}, \Sigma_\tau)
+$$
+
+where
+
+$$
+\Sigma_\tau = s_\tau^2 \; \widehat{\text{Cov}}(\boldsymbol{\tau}^{(1:t)}) + \epsilon I
+$$
+
+---
+
+### Acceptance probability
+
+$$
+\alpha = \min\left(1,
+\exp\left(
+\log p(\boldsymbol{\tau}' \mid \cdot)
+-
+\log p(\boldsymbol{\tau} \mid \cdot)
+\right)
+\right)
+$$
+
+---
+
+### Robbins--Monro update
+
+$$
+\log s_\tau^{(t+1)}
+=
+\log s_\tau^{(t)}
++
+\kappa_t (\alpha - \alpha_\tau^*)
+$$
+
+with $\alpha_\tau^* \approx 0.234$.
+
+---
+
+### Covariance adaptation
+
+$$
+\widehat{\text{Cov}}(\boldsymbol{\tau}^{(1:t)})
+\leftarrow
+\text{EmpiricalCov}(\boldsymbol{\tau}^{(1:t)})
+$$
+
+## Step 8: Sample $\boldsymbol{\gamma}$ (Adaptive MH with Robbins--Monro)
+
+Let $\boldsymbol{\gamma}_{\{1,\dots,K-1\}\setminus \mathcal{B}} \in \mathbb{R}^{K-1-|\mathcal{B}|}$.
+
+### Proposal
+
+$$
+\boldsymbol{\gamma}' \sim \mathcal{N}(\boldsymbol{\gamma}, \Sigma_\gamma)
+$$
+
+where
+
+$$
+\Sigma_\gamma = s_\gamma^2 \; \widehat{\text{Cov}}(\boldsymbol{\gamma}^{(1:t)}) + \epsilon I
+$$
+
+---
+
+### Acceptance probability
+
+$$
+\alpha = \min\left(1,
+\exp\left(
+\log p(\boldsymbol{\gamma}' \mid \cdot)
+-
+\log p(\boldsymbol{\gamma} \mid \cdot)
+\right)
+\right)
+$$
+
+---
+
+### Robbins--Monro update
+
+$$
+\log s_\gamma^{(t+1)}
+=
+\log s_\gamma^{(t)}
++
+\kappa_t (\alpha - \alpha_\gamma^*)
+$$
+
+with $\alpha_\gamma^* \approx 0.234$.
+
+---
+
+### Covariance adaptation
+
+$$
+\widehat{\text{Cov}}(\boldsymbol{\gamma}^{(1:t)})
+\leftarrow
+\text{EmpiricalCov}(\boldsymbol{\gamma}^{(1:t)})
+$$
+
+## Step 9: Sample $\rho$ (Adaptive MH with Robbins--Monro)
+
+Work on transformed scale:
+
+$$
+\xi = \log\left(\frac{\rho}{1-\rho}\right)
+$$
+
+---
+
+### Proposal
+
+$$
+\xi' \sim \mathcal{N}(\xi, s_\rho^2)
+$$
+
+$$
+\rho' = \frac{1}{1 + e^{-\xi'}}
+$$
+
+---
+
+### Acceptance probability
+
+$$
+\alpha = \min\left(1,
+\exp\left(
+\log p(\rho' \mid \cdot)
+-
+\log p(\rho \mid \cdot)
++
+\log \rho' + \log(1 - \rho')
+-
+\log \rho - \log(1 - \rho)
+\right)
+\right)
+$$
+
+---
+
+### Robbins--Monro update
+
+$$
+\log s_\rho^{(t+1)}
+=
+\log s_\rho^{(t)}
++
+\kappa_t (\alpha - \alpha_\rho^*)
+$$
+
+with target acceptance $\alpha_\rho^* \approx 0.44$.
+
+## Notes on Adaptation
+
+During burn-in ($t \leq T_{\text{adapt}}$):
+
+- Use step size:
+$$
+\kappa_t = t^{-a}, \quad a \in (0.5,1]
+$$
+
+- Update both:
+  - covariance (shape)
+  - scale (size)
+
+After burn-in:
+
+- Fix:
+$$
+\Sigma_f^{(i)}, \quad \Sigma_\tau, \quad \Sigma_\gamma, \quad s_\rho
+$$
+
+to preserve ergodicity.
+
+## Step 10: Update Derived Quantities
+
+- Recompute:
+  $$
+  R(\rho), \quad R^{-1}, \quad \log |R|
+  $$
+
+- Update sufficient statistics if needed:
+  $$
+  n_{vk}, \quad n_{ik}
+  $$
+
+---
+
+## Step 11: Store Samples
+
+If $t > B$ (post burn-in), store:
+
+$$
+\{\mu_j,\; \sigma_j^2,\; \phi_j,\;
+\boldsymbol{f}_i,\;
+\boldsymbol{\tau},\;
+\boldsymbol{\gamma},\;
+\rho\}
+$$
+
+Optionally store $z_{im}$.

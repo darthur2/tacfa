@@ -1,11 +1,12 @@
 Package: tacfa
 Type: Package
-Title: What the Package Does (Short Line)
+Title: Text-Augmented Confirmatory Factor Analysis
 Version: 1.0
 Date: 2026-03-19
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line).
-License: What license is it under?
-Imports: Rcpp (>= 1.1.0)
+Author: David Athur
+Maintainer: David Arthur <dbarthur@uw.edu>
+Description: Fits a joint confirmatory factor analysis with topic modeling
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.0.14), posterior (>= 1.6.1), MASS (>= 7.3-65), abind (>= 1.4-8)
 LinkingTo: Rcpp, RcppEigen
+RoxygenNote: 7.3.3

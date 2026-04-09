@@ -11,20 +11,260 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// sample_catC
-int sample_catC(NumericVector p);
-RcppExport SEXP _tacfa_sample_catC(SEXP pSEXP) {
+// sample_mu_cpp
+Eigen::VectorXd sample_mu_cpp(const Eigen::MatrixXd& Y, const Eigen::MatrixXd& FF, const Eigen::MatrixXd& Phi, const Eigen::VectorXd& sigma2, double mu_0, double sigma_mu2);
+RcppExport SEXP _tacfa_sample_mu_cpp(SEXP YSEXP, SEXP FFSEXP, SEXP PhiSEXP, SEXP sigma2SEXP, SEXP mu_0SEXP, SEXP sigma_mu2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_catC(p));
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF(FFSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Phi(PhiSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type sigma2(sigma2SEXP);
+    Rcpp::traits::input_parameter< double >::type mu_0(mu_0SEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_mu2(sigma_mu2SEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_mu_cpp(Y, FF, Phi, sigma2, mu_0, sigma_mu2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_sigma2_cpp
+Eigen::VectorXd sample_sigma2_cpp(const Eigen::MatrixXd& Y, const Eigen::MatrixXd& FF, const Eigen::MatrixXd& Phi, const Eigen::VectorXd& mu, double a_sigma2, double b_sigma2);
+RcppExport SEXP _tacfa_sample_sigma2_cpp(SEXP YSEXP, SEXP FFSEXP, SEXP PhiSEXP, SEXP muSEXP, SEXP a_sigma2SEXP, SEXP b_sigma2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF(FFSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Phi(PhiSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type a_sigma2(a_sigma2SEXP);
+    Rcpp::traits::input_parameter< double >::type b_sigma2(b_sigma2SEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_sigma2_cpp(Y, FF, Phi, mu, a_sigma2, b_sigma2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_phi_cpp
+Eigen::VectorXd sample_phi_cpp(const Eigen::MatrixXd& Y, const Eigen::MatrixXd& FF, const Eigen::VectorXd& mu, const Eigen::VectorXd& sigma2, double mu_phi, double sigma_phi2, const IntegerVector& phi_fixed, const IntegerVector& phi_factor);
+RcppExport SEXP _tacfa_sample_phi_cpp(SEXP YSEXP, SEXP FFSEXP, SEXP muSEXP, SEXP sigma2SEXP, SEXP mu_phiSEXP, SEXP sigma_phi2SEXP, SEXP phi_fixedSEXP, SEXP phi_factorSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF(FFSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type sigma2(sigma2SEXP);
+    Rcpp::traits::input_parameter< double >::type mu_phi(mu_phiSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_phi2(sigma_phi2SEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type phi_fixed(phi_fixedSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type phi_factor(phi_factorSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_phi_cpp(Y, FF, mu, sigma2, mu_phi, sigma_phi2, phi_fixed, phi_factor));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_Psi_cpp
+Eigen::MatrixXd sample_Psi_cpp(const Eigen::VectorXd& beta, const Eigen::MatrixXd& n_vk, const IntegerVector& anchor_words, double anchor_prob, double nonanchor_prob);
+RcppExport SEXP _tacfa_sample_Psi_cpp(SEXP betaSEXP, SEXP n_vkSEXP, SEXP anchor_wordsSEXP, SEXP anchor_probSEXP, SEXP nonanchor_probSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type n_vk(n_vkSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type anchor_words(anchor_wordsSEXP);
+    Rcpp::traits::input_parameter< double >::type anchor_prob(anchor_probSEXP);
+    Rcpp::traits::input_parameter< double >::type nonanchor_prob(nonanchor_probSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_Psi_cpp(beta, n_vk, anchor_words, anchor_prob, nonanchor_prob));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_Z_cpp
+List sample_Z_cpp(List W, const NumericMatrix& Theta, const NumericMatrix& log_Psi_full);
+RcppExport SEXP _tacfa_sample_Z_cpp(SEXP WSEXP, SEXP ThetaSEXP, SEXP log_Psi_fullSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type W(WSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type Theta(ThetaSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type log_Psi_full(log_Psi_fullSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_Z_cpp(W, Theta, log_Psi_full));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_Theta_cpp
+Eigen::MatrixXd comp_Theta_cpp(const Eigen::VectorXd& tau_full, const Eigen::MatrixXd& FF, const Eigen::MatrixXd& Gamma);
+RcppExport SEXP _tacfa_comp_Theta_cpp(SEXP tau_fullSEXP, SEXP FFSEXP, SEXP GammaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau_full(tau_fullSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF(FFSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Gamma(GammaSEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_Theta_cpp(tau_full, FF, Gamma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_n_vk_cpp
+NumericMatrix comp_n_vk_cpp(List W, List Z, int V, int K);
+RcppExport SEXP _tacfa_comp_n_vk_cpp(SEXP WSEXP, SEXP ZSEXP, SEXP VSEXP, SEXP KSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type W(WSEXP);
+    Rcpp::traits::input_parameter< List >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< int >::type V(VSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_n_vk_cpp(W, Z, V, K));
+    return rcpp_result_gen;
+END_RCPP
+}
+// make_Z_cpp
+List make_Z_cpp(NumericMatrix Theta, IntegerVector M);
+RcppExport SEXP _tacfa_make_Z_cpp(SEXP ThetaSEXP, SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type Theta(ThetaSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_Z_cpp(Theta, M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// make_W_cpp
+List make_W_cpp(const NumericMatrix& Psi_full, const List& Z);
+RcppExport SEXP _tacfa_make_W_cpp(SEXP Psi_fullSEXP, SEXP ZSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type Psi_full(Psi_fullSEXP);
+    Rcpp::traits::input_parameter< const List& >::type Z(ZSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_W_cpp(Psi_full, Z));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_log_p_FF_cpp
+Eigen::VectorXd comp_log_p_FF_cpp(const Eigen::MatrixXd& Y, const Eigen::MatrixXd& n_ik, const Eigen::MatrixXd& FF, const Eigen::VectorXd& mu, const Eigen::MatrixXd& R_inv, const Eigen::VectorXd& sigma2, const Eigen::MatrixXd& Phi, const Eigen::MatrixXd& Gamma, const Eigen::VectorXd& tau, const Eigen::MatrixXd& FF_Gamma);
+RcppExport SEXP _tacfa_comp_log_p_FF_cpp(SEXP YSEXP, SEXP n_ikSEXP, SEXP FFSEXP, SEXP muSEXP, SEXP R_invSEXP, SEXP sigma2SEXP, SEXP PhiSEXP, SEXP GammaSEXP, SEXP tauSEXP, SEXP FF_GammaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type n_ik(n_ikSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF(FFSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type R_inv(R_invSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type sigma2(sigma2SEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Phi(PhiSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Gamma(GammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF_Gamma(FF_GammaSEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_log_p_FF_cpp(Y, n_ik, FF, mu, R_inv, sigma2, Phi, Gamma, tau, FF_Gamma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_grad_log_p_FF_cpp
+Eigen::MatrixXd comp_grad_log_p_FF_cpp(const Eigen::MatrixXd& Y, const Eigen::MatrixXd& n_ik, const Eigen::MatrixXd& FF, const Eigen::VectorXd& mu, const Eigen::MatrixXd& R_inv, const Eigen::VectorXd& sigma2, const Eigen::MatrixXd& Phi, const Eigen::MatrixXd& Gamma, const Eigen::VectorXd& tau_full, const Eigen::MatrixXd& FF_Gamma);
+RcppExport SEXP _tacfa_comp_grad_log_p_FF_cpp(SEXP YSEXP, SEXP n_ikSEXP, SEXP FFSEXP, SEXP muSEXP, SEXP R_invSEXP, SEXP sigma2SEXP, SEXP PhiSEXP, SEXP GammaSEXP, SEXP tau_fullSEXP, SEXP FF_GammaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type n_ik(n_ikSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF(FFSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type R_inv(R_invSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type sigma2(sigma2SEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Phi(PhiSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type Gamma(GammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau_full(tau_fullSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF_Gamma(FF_GammaSEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_grad_log_p_FF_cpp(Y, n_ik, FF, mu, R_inv, sigma2, Phi, Gamma, tau_full, FF_Gamma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_log_p_gamma_cpp
+double comp_log_p_gamma_cpp(const Eigen::MatrixXd& FF_Gamma, const Eigen::VectorXd& gamma, const Eigen::MatrixXd& n_ik, const Eigen::VectorXd& tau_full, double mu_gamma, double sigma_gamma2);
+RcppExport SEXP _tacfa_comp_log_p_gamma_cpp(SEXP FF_GammaSEXP, SEXP gammaSEXP, SEXP n_ikSEXP, SEXP tau_fullSEXP, SEXP mu_gammaSEXP, SEXP sigma_gamma2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF_Gamma(FF_GammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type n_ik(n_ikSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau_full(tau_fullSEXP);
+    Rcpp::traits::input_parameter< double >::type mu_gamma(mu_gammaSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_gamma2(sigma_gamma2SEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_log_p_gamma_cpp(FF_Gamma, gamma, n_ik, tau_full, mu_gamma, sigma_gamma2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_grad_log_p_gamma_cpp
+Eigen::VectorXd comp_grad_log_p_gamma_cpp(const Eigen::MatrixXd& FF, const Eigen::MatrixXd& FF_Gamma, const Eigen::VectorXd& gamma, const Eigen::MatrixXd& n_ik, const Eigen::VectorXd& tau_full, double mu_gamma, double sigma_gamma2, const IntegerVector& gamma_fixed, const IntegerVector& gamma_factor);
+RcppExport SEXP _tacfa_comp_grad_log_p_gamma_cpp(SEXP FFSEXP, SEXP FF_GammaSEXP, SEXP gammaSEXP, SEXP n_ikSEXP, SEXP tau_fullSEXP, SEXP mu_gammaSEXP, SEXP sigma_gamma2SEXP, SEXP gamma_fixedSEXP, SEXP gamma_factorSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF(FFSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF_Gamma(FF_GammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type n_ik(n_ikSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau_full(tau_fullSEXP);
+    Rcpp::traits::input_parameter< double >::type mu_gamma(mu_gammaSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_gamma2(sigma_gamma2SEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type gamma_fixed(gamma_fixedSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type gamma_factor(gamma_factorSEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_grad_log_p_gamma_cpp(FF, FF_Gamma, gamma, n_ik, tau_full, mu_gamma, sigma_gamma2, gamma_fixed, gamma_factor));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_log_p_tau_cpp
+double comp_log_p_tau_cpp(const Eigen::MatrixXd& FF_Gamma, const Eigen::MatrixXd& n_ik, const Eigen::VectorXd& tau, const Eigen::VectorXd& tau_full, double mu_tau, double sigma_tau2);
+RcppExport SEXP _tacfa_comp_log_p_tau_cpp(SEXP FF_GammaSEXP, SEXP n_ikSEXP, SEXP tauSEXP, SEXP tau_fullSEXP, SEXP mu_tauSEXP, SEXP sigma_tau2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF_Gamma(FF_GammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type n_ik(n_ikSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau_full(tau_fullSEXP);
+    Rcpp::traits::input_parameter< double >::type mu_tau(mu_tauSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_tau2(sigma_tau2SEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_log_p_tau_cpp(FF_Gamma, n_ik, tau, tau_full, mu_tau, sigma_tau2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// comp_grad_log_p_tau_cpp
+Eigen::VectorXd comp_grad_log_p_tau_cpp(const Eigen::MatrixXd& FF_Gamma, const Eigen::MatrixXd& n_ik, const Eigen::VectorXd& tau, const Eigen::VectorXd& tau_full, double mu_tau, double sigma_tau2, const IntegerVector& topic_baseline);
+RcppExport SEXP _tacfa_comp_grad_log_p_tau_cpp(SEXP FF_GammaSEXP, SEXP n_ikSEXP, SEXP tauSEXP, SEXP tau_fullSEXP, SEXP mu_tauSEXP, SEXP sigma_tau2SEXP, SEXP topic_baselineSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type FF_Gamma(FF_GammaSEXP);
+    Rcpp::traits::input_parameter< const Eigen::MatrixXd& >::type n_ik(n_ikSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const Eigen::VectorXd& >::type tau_full(tau_fullSEXP);
+    Rcpp::traits::input_parameter< double >::type mu_tau(mu_tauSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_tau2(sigma_tau2SEXP);
+    Rcpp::traits::input_parameter< const IntegerVector& >::type topic_baseline(topic_baselineSEXP);
+    rcpp_result_gen = Rcpp::wrap(comp_grad_log_p_tau_cpp(FF_Gamma, n_ik, tau, tau_full, mu_tau, sigma_tau2, topic_baseline));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_tacfa_sample_catC", (DL_FUNC) &_tacfa_sample_catC, 1},
+    {"_tacfa_sample_mu_cpp", (DL_FUNC) &_tacfa_sample_mu_cpp, 6},
+    {"_tacfa_sample_sigma2_cpp", (DL_FUNC) &_tacfa_sample_sigma2_cpp, 6},
+    {"_tacfa_sample_phi_cpp", (DL_FUNC) &_tacfa_sample_phi_cpp, 8},
+    {"_tacfa_sample_Psi_cpp", (DL_FUNC) &_tacfa_sample_Psi_cpp, 5},
+    {"_tacfa_sample_Z_cpp", (DL_FUNC) &_tacfa_sample_Z_cpp, 3},
+    {"_tacfa_comp_Theta_cpp", (DL_FUNC) &_tacfa_comp_Theta_cpp, 3},
+    {"_tacfa_comp_n_vk_cpp", (DL_FUNC) &_tacfa_comp_n_vk_cpp, 4},
+    {"_tacfa_make_Z_cpp", (DL_FUNC) &_tacfa_make_Z_cpp, 2},
+    {"_tacfa_make_W_cpp", (DL_FUNC) &_tacfa_make_W_cpp, 2},
+    {"_tacfa_comp_log_p_FF_cpp", (DL_FUNC) &_tacfa_comp_log_p_FF_cpp, 10},
+    {"_tacfa_comp_grad_log_p_FF_cpp", (DL_FUNC) &_tacfa_comp_grad_log_p_FF_cpp, 10},
+    {"_tacfa_comp_log_p_gamma_cpp", (DL_FUNC) &_tacfa_comp_log_p_gamma_cpp, 6},
+    {"_tacfa_comp_grad_log_p_gamma_cpp", (DL_FUNC) &_tacfa_comp_grad_log_p_gamma_cpp, 9},
+    {"_tacfa_comp_log_p_tau_cpp", (DL_FUNC) &_tacfa_comp_log_p_tau_cpp, 6},
+    {"_tacfa_comp_grad_log_p_tau_cpp", (DL_FUNC) &_tacfa_comp_grad_log_p_tau_cpp, 7},
     {NULL, NULL, 0}
 };
 

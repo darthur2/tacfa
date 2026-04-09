@@ -77,7 +77,7 @@ sample_FF <- function(
   drift_curr <- grad_curr %*% G_FF
   
   # ---- Proposal ----
-  noise <- matrix(rnorm(N * L), N, L) %*% chol_G_FF
+  noise <- matrix(stats::rnorm(N * L), N, L) %*% chol_G_FF
   
   FF_prop <- FF +
     (step_size^2 / 2) * drift_curr +
@@ -105,7 +105,7 @@ sample_FF <- function(
   log_accept_ratio <- logp_prop - logp_curr +
     log_q_backward - log_q_forward
   
-  log_u <- log(runif(N))
+  log_u <- log(stats::runif(N))
   accept <- log_u < log_accept_ratio
   
   FF_new <- FF
@@ -185,7 +185,7 @@ sample_gamma <- function(
   drift_curr <- grad_curr %*% G_gamma
   
   # ---- Proposal ----
-  noise <- rnorm(d) %*% chol_G_gamma
+  noise <- stats::rnorm(d) %*% chol_G_gamma
   
   gamma_prop <- gamma +
     (step_size^2 / 2) * drift_curr +
@@ -216,7 +216,7 @@ sample_gamma <- function(
   log_accept_ratio <- logp_prop - logp_curr +
     log_q_backward - log_q_forward
   
-  log_u <- log(runif(1))
+  log_u <- log(stats::runif(1))
   accept <- log_u < log_accept_ratio
   
   if (accept){
@@ -298,7 +298,7 @@ sample_tau <- function(
   drift_curr <- grad_curr %*% G_tau
   
   # ---- Proposal ----
-  noise <- rnorm(d) %*% chol_G_tau
+  noise <- stats::rnorm(d) %*% chol_G_tau
   
   tau_prop <- tau +
     (step_size^2 / 2) * drift_curr +
@@ -327,7 +327,7 @@ sample_tau <- function(
   log_accept_ratio <- logp_prop - logp_curr +
     log_q_backward - log_q_forward
   
-  log_u <- log(runif(1))
+  log_u <- log(stats::runif(1))
   accept <- log_u < log_accept_ratio
   
   if (accept){

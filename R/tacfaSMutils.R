@@ -1,5 +1,6 @@
 ### Data Generation Functions ###
 
+#' @export
 make_tacfaSM_data <- function(N,
                               V,
                               M_min,
@@ -140,6 +141,7 @@ make_FF <- function(N, R){
 }
 
 make_Y <- function(Mu, FF, Phi, sigma2){
+  N <- nrow(FF)
   J <- length(sigma2)
   
   Z_mean <- numeric(J)
@@ -208,7 +210,7 @@ rmvnorm <- function(n, mu, Sigma) {
   
   L <- chol(Sigma)
   
-  Z <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  Z <- matrix(stats::rnorm(n * p), nrow = n, ncol = p)
   
   samples <- Z %*% L
   
@@ -219,7 +221,7 @@ rmvnorm <- function(n, mu, Sigma) {
 
 rtnorm_lower_single <- function(mu, sigma, lower = 0){
   repeat {
-    x <- rnorm(1, mu, sigma)
+    x <- stats::rnorm(1, mu, sigma)
     
     if (x > lower) {
       return(x)
@@ -229,7 +231,7 @@ rtnorm_lower_single <- function(mu, sigma, lower = 0){
 
 rdirichlet_single <- function(alpha){
   n <- length(alpha)
-  x <- rgamma(n, alpha)
+  x <- stats::rgamma(n, alpha)
   
   draw <- x/sum(x)
   

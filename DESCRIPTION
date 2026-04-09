@@ -1,0 +1,14 @@
+Package: tacfa
+Type: Package
+Title: Text-Augmented Confirmatory Factor Analysis
+Version: 1.0
+Date: 2026-03-19
+Author: David Athur
+Maintainer: David Arthur <dbarthur@uw.edu>
+Description: Fits a joint confirmatory factor analysis with topic modeling
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.0.14), posterior (>= 1.6.1), MASS (>= 7.3-65), abind (>= 1.4-8)
+LinkingTo: Rcpp, RcppEigen
+RoxygenNote: 7.3.3
+URL: https://github.com/darthur2/tacfa
+BugReports: https://github.com/darthur2/tacfa/issues

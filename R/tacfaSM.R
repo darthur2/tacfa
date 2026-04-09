@@ -1,3 +1,12 @@
+#' @useDynLib tacfa, .registration = TRUE
+#' @importFrom Rcpp evalCpp
+#' @importFrom stats rnorm
+#' @importFrom stats rgamma
+#' @importFrom stats rbeta
+#' @importFrom stats runif
+NULL
+
+#' @export
 tacfaSM <- function(Y,
                     W,
                     V,
@@ -30,6 +39,7 @@ tacfaSM <- function(Y,
                     niter = 5000,
                     nburn = 1000,
                     warmup = 250){
+  
   N <- nrow(Y)
   J <- ncol(Y)
   L <- max(phi_factor)
@@ -37,33 +47,33 @@ tacfaSM <- function(Y,
   
   mu <- sapply(1:J, function(j) rtnorm_lower_single(mu_phi, sigma_phi2))
   
-  phi <- rnorm(J-L, mu_phi, sigma_phi2)
+  phi <- stats::rnorm(J-L, mu_phi, sigma_phi2)
   Phi <- make_Phi(phi, phi_factor, phi_fixed)
   
-  sigma2 <- 1/rgamma(J, a_sigma2, b_sigma2)
+  sigma2 <- 1/stats::rgamma(J, a_sigma2, b_sigma2)
   
-  rho <- rbeta(1, a_rho, b_rho)
-  log_step_rho <- log(0.1)
+  rho <- stats::rbeta(1, a_rho, b_rho)
+  log_step_rho <- log(0.25)
   R <- make_R(rho, L)
   chol_R <- chol(R)
   R_inv <- chol2inv(chol_R)
   
-  FF <- matrix(rnorm(N*L), N, L)
-  log_step_FF <- log(0.1)
+  FF <- matrix(stats::rnorm(N*L), N, L)
+  log_step_FF <- log(0.25)
   G_FF <- R
   chol_G_FF <- chol(G_FF)
   G_inv_FF <- chol2inv(chol_G_FF)
   FF_mean <- colMeans(FF)
   C_FF <- matrix(0, L, L)
   
-  gamma <- rnorm(K-L-1, mu_gamma, sigma_gamma2)
+  gamma <- rep(-1*gamma_fixed_value, K-L-1)
   gamma_args <- list(gamma = gamma,
                      gamma_factor = gamma_factor,
                      gamma_fixed = gamma_fixed,
                      gamma_fixed_value = gamma_fixed_value,
                      topic_baseline = topic_baseline)
   Gamma <- do.call(make_Gamma, gamma_args)
-  log_step_gamma <- log(0.1)
+  log_step_gamma <- log(0.25)
   G_inv_gamma <- G_gamma <- diag(K-L-1)
   gamma_mean <- rep(0, K-L-1)
   C_gamma <- matrix(0, K-L-1, K-L-1)
@@ -72,7 +82,7 @@ tacfaSM <- function(Y,
   tau_args <- list(tau = tau,
                    topic_baseline = topic_baseline)
   tau_full <- make_tau_full(tau, topic_baseline)
-  log_step_tau <- log(0.1)
+  log_step_tau <- log(0.25)
   G_inv_tau <- G_tau <- diag(K-1)
   tau_mean <- rep(0, K-1)
   C_tau <- matrix(0, K-1, K-1)
